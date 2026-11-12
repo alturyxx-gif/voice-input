@@ -19,6 +19,12 @@ if(ANDROID_ABI STREQUAL "armeabi-v7a")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpu=neon-fp16 -mfloat-abi=softfp")
 endif()
 
+# Custom build: ARMv8.2 dot-product/fp16 for much faster quantized models on modern phones
+if(ANDROID_ABI STREQUAL "arm64-v8a")
+    set(GGML_NATIVE OFF CACHE BOOL "" FORCE)
+    set(GGML_CPU_ARM_ARCH "armv8.2-a+dotprod+fp16" CACHE STRING "" FORCE)
+endif()
+
 add_subdirectory(transcribe.cpp)
 
 set(CMAKE_CXX_FLAGS "-O3 -Wall -Wextra -g3")

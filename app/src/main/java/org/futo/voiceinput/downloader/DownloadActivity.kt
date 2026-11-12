@@ -276,6 +276,27 @@ class DownloadActivity : ComponentActivity() {
                         source.closeQuietly()
 
                         if(it.error.value) return@let
+
+                        // Custom build: verify models downloaded from outside FUTO's server
+                        val expected = org.futo.voiceinput.shared.ExternalModelDownloads[it.name]?.second
+                        if(expected != null) {
+                            val digest = java.security.MessageDigest.getInstance("SHA-256")
+                            file.inputStream().use { input ->
+                                val buf = ByteArray(1 shl 16)
+                                while (true) {
+                                    val n = input.read(buf)
+                                    if (n < 0) break
+                                    digest.update(buf, 0, n)
+                                }
+                            }
+                            val actual = digest.digest().joinToString("") { b -> "%02x".format(b) }
+                            if(!actual.equals(expected, ignoreCase = true)) {
+                                file.delete()
+                                it.error.value = true
+                                return@let
+                            }
+                        }
+
                         if(!file.renameTo(File(this@DownloadActivity.filesDir, it.name))) {
                             throw IllegalStateException()
                         }
@@ -359,7 +380,8 @@ class DownloadActivity : ComponentActivity() {
         modelsToDownload.addAll(models.filter { this.fileNeedsDownloading(it) }.map {
             ModelInfo(
                 name = it,
-                url = "https://dl.voiceinput.futo.org/VoiceInput/${it}",
+                url = org.futo.voiceinput.shared.ExternalModelDownloads[it]?.first
+                    ?: "https://dl.voiceinput.futo.org/VoiceInput/${it}",
             )
         })
 

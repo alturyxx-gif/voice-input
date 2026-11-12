@@ -59,6 +59,7 @@
     <string name="base_name">Whisper 74</string>
     <!-- Model name for the small model -->
     <string name="small_name">Whisper 244</string>
+    <string name="whisper_turbo_name">Whisper Turbo 809 (large-v3-turbo)</string>
 
     <!-- Indicates that a bluetooth mic is being used -->
     <string name="using_bluetooth_mic">Using Bluetooth mic (%1$s)</string>

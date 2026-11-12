@@ -1,4 +1,7 @@
 #include <string>
+#include <cstring>
+#include <cstdio>
+#include <cmath>
 #include <vector>
 #include <map>
 #include <jni.h>
@@ -63,6 +66,8 @@ struct WhisperModelState {
     size_t last_exit = 0;
     size_t inference_time = 0;
     size_t preview_every = 0;
+
+    bool shorten_audio_ctx = false;
 };
 
 void log_callback(transcribe_log_level level, const char *msg, void *userdata) {
@@ -128,6 +133,16 @@ static jlong WhisperGGML_open(JNIEnv *env, jclass clazz, jstring model_dir) {
         return 0L;
     }
 
+    {
+        // FUTO's legacy .bin Whisper models are all "acft"; GGUF ones only if named so
+        bool is_gguf = false;
+        if(FILE *f = fopen(model_dir_str.c_str(), "rb")) {
+            char magic[4] = {0};
+            is_gguf = fread(magic, 1, 4, f) == 4 && memcmp(magic, "GGUF", 4) == 0;
+            fclose(f);
+        }
+        state->shorten_audio_ctx = !is_gguf || model_dir_str.find("acft") != std::string::npos;
+    }
     AKLOGE("[whisper] WhisperGGML_open success!");
     transcribe_set_abort_callback(state->session, abort_callback, (void*)state);
     return reinterpret_cast<jlong>(state);
@@ -221,7 +236,11 @@ static jstring WhisperGGML_infer(JNIEnv *env, jobject instance, jlong handle, jf
     )) {
         transcribe_whisper_run_ext_init(&wp);
 
-        wp.audio_ctx = std::max(160, std::min(1500, (int)ceil((double)num_samples / (double)(320.0)) + 32));
+        // Custom build: only FUTO's "acft" fine-tuned Whisper models work with a shortened audio
+        // window. Stock models such as large-v3-turbo need the full 30 s window.
+        if(state->shorten_audio_ctx) {
+            wp.audio_ctx = std::max(160, std::min(1500, (int)ceil((double)num_samples / (double)(320.0)) + 32));
+        }
 
         if(prompt) {
             auto p = jstring2string(env, prompt);

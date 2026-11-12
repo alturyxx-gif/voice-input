@@ -67,6 +67,19 @@ private val Nemotron600M = ModelDownloadable(
     )
 )
 
+const val WHISPER_TURBO_FILE = "whisper-large-v3-turbo-Q5_K_M.gguf"
+
+/**
+ * Custom build: models that are not hosted on FUTO's server. Maps file name to
+ * (download URL, SHA-256). The checksum is verified after downloading.
+ */
+val ExternalModelDownloads: Map<String, Pair<String, String>> = mapOf(
+    WHISPER_TURBO_FILE to (
+        "https://huggingface.co/handy-computer/whisper-large-v3-turbo-gguf/resolve/main/$WHISPER_TURBO_FILE" to
+        "06fc9923c09fb3ae878ea12c34d1be3ed18fad039ab14b4b045c7b6c40af56b2"
+    )
+)
+
 val ALL_MODELS: List<ModelLoader> = listOf(
     ModelDownloadable(
         id = "whisper-en-tiny",
@@ -202,6 +215,17 @@ val ALL_MODELS: List<ModelLoader> = listOf(
         caps = WhisperMultiCapabilities.copy(paramCount = 244),
     ),
     Nemotron600M,
+
+    // Custom build: Whisper large-v3-turbo (OpenAI, MIT license) in transcribe.cpp's GGUF
+    // format, downloaded from Hugging Face (see ExternalModelDownloads). Much more accurate
+    // than Whisper small; slower on the CPU.
+    ModelDownloadable(
+        id = "whisper-large-v3-turbo",
+        name = R.string.whisper_turbo_name,
+        ggmlFile = WHISPER_TURBO_FILE,
+        checksum = "06fc9923c09fb3ae878ea12c34d1be3ed18fad039ab14b4b045c7b6c40af56b2",
+        caps = WhisperMultiCapabilities.copy(paramCount = 809),
+    ),
 
     // Spanish
     ModelDownloadable(
