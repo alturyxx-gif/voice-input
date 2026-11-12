@@ -163,6 +163,14 @@ android {
             dimension "version"
             versionNameSuffix "-devSameId"
         }
+
+        // Side-by-side build: installs next to the official FUTO Voice Input
+        // and shows as "FUTO Voice Input Custom".
+        custom {
+            dimension "version"
+            versionNameSuffix "-custom"
+            applicationIdSuffix ".custom"
+        }
     }
 
     sourceSets {
@@ -205,6 +213,18 @@ android {
 
         fDroid {
             // Updates are handled by F-Droid
+            java.srcDir 'src/withoutUpdateChecking/java'
+
+            // Include only PayPal billing, do not depend on Play Store billing
+            java.srcDir 'src/payPalBilling/java'
+            res.srcDir 'src/payPalBilling/res'
+
+            // Include non-dev code
+            java.srcDir 'src/nonDev/java'
+        }
+
+        custom {
+            // No update checking: this build must never try to replace itself with the official app
             java.srcDir 'src/withoutUpdateChecking/java'
 
             // Include only PayPal billing, do not depend on Play Store billing
